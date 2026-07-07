@@ -123,30 +123,17 @@ impl From<Asn> for u32 {
 // --- Parsing ---
 
 /// Error returned when parsing an ASN string fails.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ParseAsnError {
-    /// The string was empty.
+    #[error("empty string")]
     Empty,
-    /// Plain decimal value exceeds `u32::MAX`.
+    #[error("value exceeds maximum ASN (4294967295)")]
     Overflow,
-    /// A dot-notation component (X or Y) exceeded 65535.
+    #[error("dot-notation component exceeds 65535")]
     ComponentOverflow,
-    /// The string was not valid ASPLAIN, ASDOT, or ASDOT+ notation.
+    #[error("invalid AS number format")]
     Invalid,
 }
-
-impl fmt::Display for ParseAsnError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Self::Empty => write!(f, "empty string"),
-            Self::Overflow => write!(f, "value exceeds maximum ASN (4294967295)"),
-            Self::ComponentOverflow => write!(f, "dot-notation component exceeds 65535"),
-            Self::Invalid => write!(f, "invalid AS number format"),
-        }
-    }
-}
-
-impl std::error::Error for ParseAsnError {}
 
 impl FromStr for Asn {
     type Err = ParseAsnError;
