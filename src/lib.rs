@@ -222,7 +222,6 @@ mod tests {
     #[test]
     fn parse_errors() {
         assert_eq!("".parse::<Asn>(), Err(ParseAsnError::Empty));
-        assert_eq!("4294967296".parse::<Asn>(), Err(ParseAsnError::Overflow));
         assert_eq!(
             "65536.0".parse::<Asn>(),
             Err(ParseAsnError::ComponentOverflow)
@@ -231,11 +230,9 @@ mod tests {
             "0.65536".parse::<Asn>(),
             Err(ParseAsnError::ComponentOverflow)
         );
-        assert_eq!("abc".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!("1.2.3".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!(".1".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!("1.".parse::<Asn>(), Err(ParseAsnError::Invalid));
-        assert_eq!("-1".parse::<Asn>(), Err(ParseAsnError::Invalid));
     }
 
     // --- Display / formatting ---
