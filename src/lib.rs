@@ -8,7 +8,6 @@
 //! `Display` defaults to ASDOT notation. Use [`Asn::to_asplain`] or
 //! [`Asn::to_asdot_plus`] for the other formats.
 
-use std::fmt;
 use std::str::FromStr;
 
 /// An Autonomous System Number, stored as a `u32`.
@@ -27,7 +26,8 @@ use std::str::FromStr;
 /// let asn: Asn = "65536".parse().unwrap();   // ASPLAIN input also works
 /// assert_eq!(asn.to_string(), "1.0");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
+#[display("{}", self.to_asdot())]
 pub struct Asn(u32);
 
 impl Asn {
@@ -93,12 +93,6 @@ impl Asn {
     }
 }
 
-/// `Display` uses ASDOT notation (the crate's namesake and default per this library).
-impl fmt::Display for Asn {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(&self.to_asdot())
-    }
-}
 
 // --- Conversions ---
 
