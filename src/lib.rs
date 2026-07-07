@@ -93,7 +93,6 @@ impl Asn {
     }
 }
 
-
 // --- Conversions ---
 
 impl From<u32> for Asn {
@@ -151,7 +150,9 @@ impl FromStr for Asn {
 
             // Reject multiple dots by trying to parse low_str as u32:
             // "1.2.3" → low_str="2.3" → parse fails → Invalid
-            let high: u32 = high_str.parse::<u32>().map_err(|_| ParseAsnError::Invalid)?;
+            let high: u32 = high_str
+                .parse::<u32>()
+                .map_err(|_| ParseAsnError::Invalid)?;
             let low: u32 = low_str.parse::<u32>().map_err(|_| ParseAsnError::Invalid)?;
 
             if high > 0xFFFF {
@@ -161,14 +162,14 @@ impl FromStr for Asn {
                 return Err(ParseAsnError::ComponentOverflow);
             }
 
+            // since we shifted high all the way to the left, bitwise or just tasks the lower bits on what would presumably be all zeroes
             Ok(Self((high << 16) | low))
         } else {
-            // ASPLAIN: parse as u64 first to detect overflow cleanly
-            let value: u64 = s.parse::<u64>().map_err(|_| ParseAsnError::Invalid)?;
-            if value > u32::MAX as u64 {
-                return Err(ParseAsnError::Overflow);
-            }
-            Ok(Self(value as u32))
+            let value: u32 = s.parse::<u32>().map_err(|e| match e.kind() {
+                std::num::IntErrorKind::PosOverflow => ParseAsnError::Overflow,
+                _ => ParseAsnError::Invalid,
+            })?;
+            Ok(Self(value))
         }
     }
 }
@@ -184,7 +185,10 @@ mod tests {
         assert_eq!("0".parse::<Asn>().unwrap(), Asn::new(0));
         assert_eq!("65535".parse::<Asn>().unwrap(), Asn::new(65535));
         assert_eq!("65536".parse::<Asn>().unwrap(), Asn::new(65536));
-        assert_eq!("4294967295".parse::<Asn>().unwrap(), Asn::new(4_294_967_295));
+        assert_eq!(
+            "4294967295".parse::<Asn>().unwrap(),
+            Asn::new(4_294_967_295)
+        );
     }
 
     #[test]
@@ -194,15 +198,39 @@ mod tests {
         assert_eq!("0.65535".parse::<Asn>().unwrap(), Asn::new(65535));
         assert_eq!("1.0".parse::<Asn>().unwrap(), Asn::new(65536));
         assert_eq!("1.1".parse::<Asn>().unwrap(), Asn::new(65537));
-        assert_eq!("65535.65535".parse::<Asn>().unwrap(), Asn::new(4_294_967_295));
+        assert_eq!(
+            "65535.65535".parse::<Asn>().unwrap(),
+            Asn::new(4_294_967_295)
+        );
+    }
+
+    #[test]
+    fn asplain_overflow() {
+        assert_eq!("4294967296".parse::<Asn>(), Err(ParseAsnError::Overflow));
+        assert_eq!(
+            "99999999999".parse::<Asn>(),
+            Err(ParseAsnError::Overflow)
+        );
+    }
+
+    #[test]
+    fn asplain_invalid() {
+        assert_eq!("abc".parse::<Asn>(), Err(ParseAsnError::Invalid));
+        assert_eq!("-1".parse::<Asn>(), Err(ParseAsnError::Invalid));
     }
 
     #[test]
     fn parse_errors() {
         assert_eq!("".parse::<Asn>(), Err(ParseAsnError::Empty));
         assert_eq!("4294967296".parse::<Asn>(), Err(ParseAsnError::Overflow));
-        assert_eq!("65536.0".parse::<Asn>(), Err(ParseAsnError::ComponentOverflow));
-        assert_eq!("0.65536".parse::<Asn>(), Err(ParseAsnError::ComponentOverflow));
+        assert_eq!(
+            "65536.0".parse::<Asn>(),
+            Err(ParseAsnError::ComponentOverflow)
+        );
+        assert_eq!(
+            "0.65536".parse::<Asn>(),
+            Err(ParseAsnError::ComponentOverflow)
+        );
         assert_eq!("abc".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!("1.2.3".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!(".1".parse::<Asn>(), Err(ParseAsnError::Invalid));
