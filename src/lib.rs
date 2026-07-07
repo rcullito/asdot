@@ -53,55 +53,6 @@ impl Asn {
         self.0
     }
 
-    // --- Classification ---
-
-    /// Returns `true` if this ASN fits in 16 bits (0–65535).
-    #[inline]
-    pub const fn is_two_byte(self) -> bool {
-        self.0 <= 0xFFFF
-    }
-
-    /// Returns `true` if this ASN requires 32 bits (> 65535).
-    #[inline]
-    pub const fn is_four_byte(self) -> bool {
-        self.0 > 0xFFFF
-    }
-
-    /// Returns `true` if this ASN is in the 16-bit private-use range (64512–65534, RFC 6996).
-    pub const fn is_private_16(self) -> bool {
-        self.0 >= 64512 && self.0 <= 65534
-    }
-
-    /// Returns `true` if this ASN is in the 32-bit private-use range (4200000000–4294967294, RFC 6996).
-    pub const fn is_private_32(self) -> bool {
-        self.0 >= 4_200_000_000 && self.0 <= 4_294_967_294
-    }
-
-    /// Returns `true` if this ASN is in any private-use range (RFC 6996).
-    pub const fn is_private(self) -> bool {
-        self.is_private_16() || self.is_private_32()
-    }
-
-    /// Returns `true` if this ASN is reserved (0, 65535, or 4294967295, RFC 7607).
-    pub const fn is_reserved(self) -> bool {
-        self.0 == 0 || self.0 == 65535 || self.0 == 4_294_967_295
-    }
-
-    /// Returns `true` if this ASN is in the 16-bit documentation range (64496–64511, RFC 5398).
-    pub const fn is_documentation_16(self) -> bool {
-        self.0 >= 64496 && self.0 <= 64511
-    }
-
-    /// Returns `true` if this ASN is in the 32-bit documentation range (65536–65551, RFC 5398).
-    pub const fn is_documentation_32(self) -> bool {
-        self.0 >= 65536 && self.0 <= 65551
-    }
-
-    /// Returns `true` if this ASN is in any documentation range (RFC 5398).
-    pub const fn is_documentation(self) -> bool {
-        self.is_documentation_16() || self.is_documentation_32()
-    }
-
     // --- Notation formatting ---
 
     /// The high-order 16-bit word (X in X.Y notation).
@@ -128,7 +79,7 @@ impl Asn {
     /// `AS 1` → `"1"`, `AS 65536` → `"1.0"`
     pub fn to_asdot(self) -> String {
         if self.high() > 0 {
-            format!("{}.{}", self.high(), self.low())
+            self.to_asdot_plus()
         } else {
             self.low().to_string()
         }
@@ -333,35 +284,6 @@ mod tests {
             let asn = Asn::new(v);
             assert_eq!(asn.to_asdot_plus().parse::<Asn>().unwrap(), asn);
         }
-    }
-
-    // --- Classification ---
-
-    #[test]
-    fn classification() {
-        assert!(Asn::new(64512).is_private());
-        assert!(Asn::new(65000).is_private());
-        assert!(Asn::new(65534).is_private());
-        assert!(!Asn::new(65535).is_private());
-        assert!(Asn::new(4_200_000_000).is_private());
-        assert!(Asn::new(4_294_967_294).is_private());
-
-        assert!(Asn::new(0).is_reserved());
-        assert!(Asn::new(65535).is_reserved());
-        assert!(Asn::new(4_294_967_295).is_reserved());
-
-        assert!(Asn::new(64496).is_documentation());
-        assert!(Asn::new(64511).is_documentation());
-        assert!(Asn::new(65536).is_documentation());
-        assert!(Asn::new(65551).is_documentation());
-        assert!(!Asn::new(65552).is_documentation());
-
-        assert!(Asn::new(1).is_two_byte());
-        assert!(Asn::new(65535).is_two_byte());
-        assert!(!Asn::new(65536).is_two_byte());
-        assert!(Asn::new(65536).is_four_byte());
-
-        assert_eq!(Asn::TRANS, Asn::new(23456));
     }
 
     // --- Conversions ---
