@@ -2,6 +2,10 @@
 name = "asdot"
 version = "0.1.0"
 edition = "2024"
+description = "RFC 5396-compliant Autonomous System Number (ASN) parsing and formatting"
+license = "MIT"
+repository = "https://github.com/rcullito/asdot"
+keywords = ["asn", "bgp", "network", "asdot", "asdot-plus"]
 
 [dependencies]
 thiserror = "2"
