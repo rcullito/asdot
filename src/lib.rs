@@ -55,14 +55,12 @@ impl Asn {
 
     // --- Notation formatting ---
 
-    /// The high-order 16-bit word (X in X.Y notation).
-    #[inline]
+    // The high-order 16-bit word (X in X.Y notation).
     const fn high(self) -> u16 {
         (self.0 >> 16) as u16
     }
 
-    /// The low-order 16-bit word (Y in X.Y notation).
-    #[inline]
+    // The low-order 16-bit word (Y in X.Y notation).
     const fn low(self) -> u16 {
         self.0 as u16
     }
@@ -147,6 +145,13 @@ impl FromStr for Asn {
     ///
     /// The parser does not distinguish between ASDOT and ASDOT+ — both produce X.Y strings
     /// and decode identically. The distinction only applies when formatting output.
+    ///
+    /// # Errors
+    ///
+    /// - [`ParseAsnError::Empty`] — input is an empty string
+    /// - [`ParseAsnError::Invalid`] — input is not a valid decimal or X.Y notation
+    /// - [`ParseAsnError::Overflow`] — plain decimal value exceeds `u32::MAX`
+    /// - [`ParseAsnError::ComponentOverflow`] — X or Y component in dot notation exceeds 65535
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.is_empty() {
             return Err(ParseAsnError::Empty);
@@ -219,10 +224,7 @@ mod tests {
     #[test]
     fn asplain_overflow() {
         assert_eq!("4294967296".parse::<Asn>(), Err(ParseAsnError::Overflow));
-        assert_eq!(
-            "99999999999".parse::<Asn>(),
-            Err(ParseAsnError::Overflow)
-        );
+        assert_eq!("99999999999".parse::<Asn>(), Err(ParseAsnError::Overflow));
     }
 
     #[test]
