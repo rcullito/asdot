@@ -7,6 +7,23 @@
 //!
 //! `Display` defaults to ASDOT notation. Use [`Asn::to_asplain`] or
 //! [`Asn::to_asdot_plus`] for the other formats.
+//!
+//! # Example
+//!
+//! ```
+//! use asdot::Asn;
+//!
+//! // Parse any RFC 5396 notation
+//! let asn: Asn = "1.0".parse().unwrap();
+//! assert_eq!(asn.value(), 65536);
+//!
+//! // Display defaults to ASDOT
+//! assert_eq!(asn.to_string(), "1.0");
+//!
+//! // Other formats available explicitly
+//! assert_eq!(asn.to_asplain(), "65536");
+//! assert_eq!(asn.to_asdot_plus(), "1.0");
+//! ```
 
 use std::str::FromStr;
 
