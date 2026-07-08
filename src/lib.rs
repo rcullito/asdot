@@ -76,7 +76,7 @@ impl Asn {
         self.0.to_string()
     }
 
-    /// Formats in ASDOT notation: X.Y only when X > 0, plain decimal otherwise.
+    /// Formats in ASDOT notation: ASDOT+ for 4-byte ASNs, plain decimal for 2-byte ASNs.
     ///
     /// ```
     /// use asdot::Asn;
@@ -91,7 +91,7 @@ impl Asn {
         }
     }
 
-    /// Formats in ASDOT+ notation: always X.Y.
+    /// Formats in ASDOT+ notation: always dot notation.
     ///
     /// ```
     /// use asdot::Asn;
@@ -128,12 +128,16 @@ impl From<Asn> for u32 {
 /// Error returned when parsing an ASN string fails.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ParseAsnError {
+    /// Input was an empty string.
     #[error("empty string")]
     Empty,
+    /// Plain decimal value exceeds `u32::MAX` (4294967295).
     #[error("value exceeds maximum ASN (4294967295)")]
     Overflow,
+    /// X or Y component in dot notation exceeds 65535.
     #[error("dot-notation component exceeds 65535")]
     ComponentOverflow,
+    /// Input is not valid decimal or X.Y notation.
     #[error("invalid AS number format")]
     Invalid,
 }
@@ -148,10 +152,7 @@ impl FromStr for Asn {
     ///
     /// # Errors
     ///
-    /// - [`ParseAsnError::Empty`] — input is an empty string
-    /// - [`ParseAsnError::Invalid`] — input is not a valid decimal or X.Y notation
-    /// - [`ParseAsnError::Overflow`] — plain decimal value exceeds `u32::MAX`
-    /// - [`ParseAsnError::ComponentOverflow`] — X or Y component in dot notation exceeds 65535
+    /// Returns [`ParseAsnError`] if the input is empty, out of range, or not valid notation.
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         if s.is_empty() {
             return Err(ParseAsnError::Empty);
