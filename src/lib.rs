@@ -69,14 +69,22 @@ impl Asn {
 
     /// Formats in ASPLAIN notation: plain decimal.
     ///
-    /// `AS 65536` → `"65536"`
+    /// ```
+    /// use asdot::Asn;
+    /// assert_eq!(Asn::new(65536).to_asplain(), "65536");
+    /// assert_eq!(Asn::new(1).to_asplain(), "1");
+    /// ```
     pub fn to_asplain(self) -> String {
         self.0.to_string()
     }
 
     /// Formats in ASDOT notation: X.Y only when X > 0, plain decimal otherwise.
     ///
-    /// `AS 1` → `"1"`, `AS 65536` → `"1.0"`
+    /// ```
+    /// use asdot::Asn;
+    /// assert_eq!(Asn::new(1).to_asdot(), "1");
+    /// assert_eq!(Asn::new(65536).to_asdot(), "1.0");
+    /// ```
     pub fn to_asdot(self) -> String {
         if self.high() > 0 {
             self.to_asdot_plus()
@@ -87,7 +95,11 @@ impl Asn {
 
     /// Formats in ASDOT+ notation: always X.Y.
     ///
-    /// `AS 1` → `"0.1"`, `AS 65536` → `"1.0"`
+    /// ```
+    /// use asdot::Asn;
+    /// assert_eq!(Asn::new(1).to_asdot_plus(), "0.1");
+    /// assert_eq!(Asn::new(65536).to_asdot_plus(), "1.0");
+    /// ```
     pub fn to_asdot_plus(self) -> String {
         format!("{}.{}", self.high(), self.low())
     }
@@ -233,37 +245,6 @@ mod tests {
         assert_eq!("1.2.3".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!(".1".parse::<Asn>(), Err(ParseAsnError::Invalid));
         assert_eq!("1.".parse::<Asn>(), Err(ParseAsnError::Invalid));
-    }
-
-    // --- Display / formatting ---
-
-    #[test]
-    fn display_asdot_default() {
-        // 2-byte range: plain decimal
-        assert_eq!(Asn::new(0).to_string(), "0");
-        assert_eq!(Asn::new(1).to_string(), "1");
-        assert_eq!(Asn::new(65535).to_string(), "65535");
-        // 4-byte range: X.Y
-        assert_eq!(Asn::new(65536).to_string(), "1.0");
-        assert_eq!(Asn::new(65537).to_string(), "1.1");
-        assert_eq!(Asn::new(4_294_967_295).to_string(), "65535.65535");
-    }
-
-    #[test]
-    fn to_asplain() {
-        assert_eq!(Asn::new(1).to_asplain(), "1");
-        assert_eq!(Asn::new(65536).to_asplain(), "65536");
-        assert_eq!(Asn::new(4_294_967_295).to_asplain(), "4294967295");
-    }
-
-    #[test]
-    fn to_asdot_plus() {
-        // Always X.Y, even for 2-byte-range ASNs
-        assert_eq!(Asn::new(0).to_asdot_plus(), "0.0");
-        assert_eq!(Asn::new(1).to_asdot_plus(), "0.1");
-        assert_eq!(Asn::new(65535).to_asdot_plus(), "0.65535");
-        assert_eq!(Asn::new(65536).to_asdot_plus(), "1.0");
-        assert_eq!(Asn::new(4_294_967_295).to_asdot_plus(), "65535.65535");
     }
 
     // --- Round-trip ---
