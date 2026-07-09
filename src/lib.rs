@@ -183,22 +183,19 @@ impl FromStr for Asn {
                 return Err(ParseAsnError::Invalid);
             }
 
-            // Reject multiple dots by trying to parse low_str as u32:
+            // Reject multiple dots by trying to parse low_str as u16:
             // "1.2.3" → low_str="2.3" → parse fails → Invalid
-            let high: u32 = high_str
-                .parse::<u32>()
-                .map_err(|_| ParseAsnError::Invalid)?;
-            let low: u32 = low_str.parse::<u32>().map_err(|_| ParseAsnError::Invalid)?;
-
-            if high > 0xFFFF {
-                return Err(ParseAsnError::ComponentOverflow);
-            }
-            if low > 0xFFFF {
-                return Err(ParseAsnError::ComponentOverflow);
-            }
+            let high: u16 = high_str.parse::<u16>().map_err(|e| match e.kind() {
+                std::num::IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
+                _ => ParseAsnError::Invalid,
+            })?;
+            let low: u16 = low_str.parse::<u16>().map_err(|e| match e.kind() {
+                std::num::IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
+                _ => ParseAsnError::Invalid,
+            })?;
 
             // since we shifted high all the way to the left, bitwise or just tasks the lower bits on what would presumably be all zeroes
-            Ok(Self((high << 16) | low))
+            Ok(Self(((high as u32) << 16) | low as u32))
         } else {
             let value: u32 = s.parse::<u32>().map_err(|e| match e.kind() {
                 std::num::IntErrorKind::PosOverflow => ParseAsnError::Overflow,
