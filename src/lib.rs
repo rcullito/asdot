@@ -78,8 +78,8 @@ impl Asn {
     }
 
     // The low-order 16-bit word (Y in X.Y notation).
-    const fn low(self) -> u16 {
-        self.0 as u16
+    const fn low(self) -> u32 {
+        self.0 & 0xFFFF
     }
 
     /// Formats in ASPLAIN notation: plain decimal.
