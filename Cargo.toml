@@ -8,5 +8,4 @@ repository = "https://github.com/rcullito/asdot"
 keywords = ["asn", "bgp", "network", "asdot", "asdot-plus"]
 
 [dependencies]
-thiserror = "2"
-derive_more = { version = "1", features = ["display"] }
+thiserror = { version = "2", default-features = false }

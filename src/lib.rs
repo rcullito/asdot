@@ -5,8 +5,8 @@
 //! - **ASDOT**: dot notation for 4-byte AS numbers only; plain for 2-byte (`1`, `1.0`)
 //! - **ASDOT+**: dot notation always (`0.1`, `1.0`)
 //!
-//! `Display` defaults to ASDOT notation. Use [`Asn::to_asplain`] or
-//! [`Asn::to_asdot_plus`] for the other formats.
+//! `Display` formats in ASDOT notation. For ASPLAIN output, format the raw
+//! value from [`Asn::value`].
 //!
 //! # Example
 //!
@@ -17,34 +17,34 @@
 //! let asn: Asn = "1.0".parse().unwrap();
 //! assert_eq!(asn.value(), 65536);
 //!
-//! // Display defaults to ASDOT
+//! // Display formats as ASDOT
 //! assert_eq!(asn.to_string(), "1.0");
 //!
-//! // Other formats available explicitly
-//! assert_eq!(asn.to_asplain(), "65536");
-//! assert_eq!(asn.to_asdot_plus(), "1.0");
+//! // ASPLAIN via the raw value
+//! assert_eq!(asn.value().to_string(), "65536");
 //! ```
 
-use std::str::FromStr;
+#![cfg_attr(not(test), no_std)]
+
+use core::fmt;
+use core::num::IntErrorKind;
+use core::str::FromStr;
 
 /// An Autonomous System Number, stored as a `u32`.
 ///
-/// Parses all three RFC 5396 notation formats and displays in ASDOT by default.
+/// Parses all three RFC 5396 notation formats and displays in ASDOT.
 ///
 /// ```
 /// use asdot::Asn;
 ///
 /// let asn: Asn = "1.0".parse().unwrap();
 /// assert_eq!(asn.value(), 65536);
-/// assert_eq!(asn.to_string(), "1.0");        // ASDOT (default Display)
-/// assert_eq!(asn.to_asplain(), "65536");
-/// assert_eq!(asn.to_asdot_plus(), "1.0");
+/// assert_eq!(asn.to_string(), "1.0");        // ASDOT Display
 ///
 /// let asn: Asn = "65536".parse().unwrap();   // ASPLAIN input also works
 /// assert_eq!(asn.to_string(), "1.0");
 /// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, derive_more::Display)]
-#[display("{}", self.to_asdot())]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Asn(u32);
 
 impl Asn {
@@ -82,41 +82,22 @@ impl Asn {
         self.0 & 0xFFFF
     }
 
-    /// Formats in ASPLAIN notation: plain decimal.
-    ///
-    /// ```
-    /// use asdot::Asn;
-    /// assert_eq!(Asn::new(65536).to_asplain(), "65536");
-    /// assert_eq!(Asn::new(1).to_asplain(), "1");
-    /// ```
-    pub fn to_asplain(self) -> String {
-        self.0.to_string()
-    }
+}
 
-    /// Formats in ASDOT notation: ASDOT+ for 4-byte ASNs, plain decimal for 2-byte ASNs.
+impl fmt::Display for Asn {
+    /// Formats in ASDOT notation: dot notation for 4-byte ASNs, plain decimal for 2-byte ASNs.
     ///
     /// ```
     /// use asdot::Asn;
-    /// assert_eq!(Asn::new(1).to_asdot(), "1");
-    /// assert_eq!(Asn::new(65536).to_asdot(), "1.0");
+    /// assert_eq!(Asn::new(1).to_string(), "1");
+    /// assert_eq!(Asn::new(65536).to_string(), "1.0");
     /// ```
-    pub fn to_asdot(self) -> String {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if self.high() > 0 {
-            self.to_asdot_plus()
+            write!(f, "{}.{}", self.high(), self.low())
         } else {
-            self.low().to_string()
+            write!(f, "{}", self.low())
         }
-    }
-
-    /// Formats in ASDOT+ notation: always dot notation.
-    ///
-    /// ```
-    /// use asdot::Asn;
-    /// assert_eq!(Asn::new(1).to_asdot_plus(), "0.1");
-    /// assert_eq!(Asn::new(65536).to_asdot_plus(), "1.0");
-    /// ```
-    pub fn to_asdot_plus(self) -> String {
-        format!("{}.{}", self.high(), self.low())
     }
 }
 
@@ -186,11 +167,11 @@ impl FromStr for Asn {
             // Reject multiple dots by trying to parse low_str as u16:
             // "1.2.3" → low_str="2.3" → parse fails → Invalid
             let high: u16 = high_str.parse::<u16>().map_err(|e| match e.kind() {
-                std::num::IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
+                IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
                 _ => ParseAsnError::Invalid,
             })?;
             let low: u16 = low_str.parse::<u16>().map_err(|e| match e.kind() {
-                std::num::IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
+                IntErrorKind::PosOverflow => ParseAsnError::ComponentOverflow,
                 _ => ParseAsnError::Invalid,
             })?;
 
@@ -198,7 +179,7 @@ impl FromStr for Asn {
             Ok(Self(((high as u32) << 16) | low as u32))
         } else {
             let value: u32 = s.parse::<u32>().map_err(|e| match e.kind() {
-                std::num::IntErrorKind::PosOverflow => ParseAsnError::Overflow,
+                IntErrorKind::PosOverflow => ParseAsnError::Overflow,
                 _ => ParseAsnError::Invalid,
             })?;
             Ok(Self(value))
@@ -264,29 +245,31 @@ mod tests {
         assert_eq!("1.".parse::<Asn>(), Err(ParseAsnError::Invalid));
     }
 
+    // --- Display ---
+
+    #[test]
+    fn display_asdot() {
+        assert_eq!(Asn::new(1).to_string(), "1");
+        assert_eq!(Asn::new(65535).to_string(), "65535");
+        assert_eq!(Asn::new(65536).to_string(), "1.0");
+        assert_eq!(Asn::new(4_294_967_295).to_string(), "65535.65535");
+    }
+
     // --- Round-trip ---
 
     #[test]
-    fn roundtrip_asplain() {
+    fn roundtrip_display() {
+        for v in [0u32, 1, 65535, 65536, 65537, 100_000, 4_294_967_295] {
+            let asn = Asn::new(v);
+            assert_eq!(asn.to_string().parse::<Asn>().unwrap(), asn);
+        }
+    }
+
+    #[test]
+    fn roundtrip_value_display() {
         for v in [0u32, 1, 65535, 65536, 100_000, 4_294_967_295] {
             let asn = Asn::new(v);
-            assert_eq!(asn.to_asplain().parse::<Asn>().unwrap(), asn);
-        }
-    }
-
-    #[test]
-    fn roundtrip_asdot() {
-        for v in [0u32, 1, 65535, 65536, 65537, 4_294_967_295] {
-            let asn = Asn::new(v);
-            assert_eq!(asn.to_asdot().parse::<Asn>().unwrap(), asn);
-        }
-    }
-
-    #[test]
-    fn roundtrip_asdot_plus() {
-        for v in [0u32, 1, 65535, 65536, 65537, 4_294_967_295] {
-            let asn = Asn::new(v);
-            assert_eq!(asn.to_asdot_plus().parse::<Asn>().unwrap(), asn);
+            assert_eq!(asn.value().to_string().parse::<Asn>().unwrap(), asn);
         }
     }
 
