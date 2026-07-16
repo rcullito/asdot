@@ -15,13 +15,16 @@ asdot = "0.1"
 ```
 
 ```rust
-use asdot::Asn;
+use asdot::{Asn, ParseAsnError};
 
-let asn: Asn = "1.0".parse().unwrap();
-assert_eq!(asn.value(), 65536);
+fn main() -> Result<(), ParseAsnError> {
+    let asn: Asn = "1.0".parse()?;
+    assert_eq!(asn.value(), 65536);
 
-assert_eq!(asn.to_string(), "1.0");             // ASDOT (default Display)
-assert_eq!(asn.value().to_string(), "65536");   // ASPLAIN via the raw value
+    assert_eq!(asn.to_string(), "1.0");             // ASDOT (default Display)
+    assert_eq!(asn.value().to_string(), "65536");   // ASPLAIN via the raw value
+    Ok(())
+}
 ```
 
 <br>

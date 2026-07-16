@@ -14,7 +14,7 @@
 //! use asdot::Asn;
 //!
 //! // Parse any RFC 5396 notation
-//! let asn: Asn = "1.0".parse().unwrap();
+//! let asn: Asn = "1.0".parse()?;
 //! assert_eq!(asn.value(), 65536);
 //!
 //! // Display formats as ASDOT
@@ -22,6 +22,7 @@
 //!
 //! // ASPLAIN via the raw value
 //! assert_eq!(asn.value().to_string(), "65536");
+//! # Ok::<(), asdot::ParseAsnError>(())
 //! ```
 
 #![cfg_attr(not(test), no_std)]
@@ -37,12 +38,13 @@ use core::str::FromStr;
 /// ```
 /// use asdot::Asn;
 ///
-/// let asn: Asn = "1.0".parse().unwrap();
+/// let asn: Asn = "1.0".parse()?;
 /// assert_eq!(asn.value(), 65536);
 /// assert_eq!(asn.to_string(), "1.0");        // ASDOT Display
 ///
-/// let asn: Asn = "65536".parse().unwrap();   // ASPLAIN input also works
+/// let asn: Asn = "65536".parse()?;           // ASPLAIN input also works
 /// assert_eq!(asn.to_string(), "1.0");
+/// # Ok::<(), asdot::ParseAsnError>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Asn(u32);
