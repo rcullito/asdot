@@ -27,6 +27,8 @@
 //! ```
 
 #![cfg_attr(not(test), no_std)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
+#![cfg_attr(docsrs, doc(auto_cfg))]
 
 use core::fmt;
 use core::num::IntErrorKind;
@@ -48,7 +50,6 @@ use core::str::FromStr;
 /// # Ok::<(), asdot::ParseAsnError>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Asn(u32);
 
 impl Asn {
@@ -113,6 +114,50 @@ impl From<u16> for Asn {
 impl From<Asn> for u32 {
     fn from(asn: Asn) -> u32 {
         asn.0
+    }
+}
+
+// --- Serde ---
+// Written by hand rather than derived: keeps serde_derive's proc-macro stack
+// out of dependents' builds, and gives rustdoc cfg information so docs.rs
+// badges these impls as feature-gated. Both mirror what the derives would
+// generate for a newtype struct over u32 (verified by the serde_tokens test).
+
+#[cfg(feature = "serde")]
+impl serde::Serialize for Asn {
+    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_newtype_struct("Asn", &self.0)
+    }
+}
+
+#[cfg(feature = "serde")]
+impl<'de> serde::Deserialize<'de> for Asn {
+    fn deserialize<D: serde::Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        struct AsnVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for AsnVisitor {
+            type Value = Asn;
+
+            fn expecting(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                f.write_str("tuple struct Asn")
+            }
+
+            fn visit_newtype_struct<D: serde::Deserializer<'de>>(
+                self,
+                deserializer: D,
+            ) -> Result<Asn, D::Error> {
+                <u32 as serde::Deserialize>::deserialize(deserializer).map(Asn)
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Asn, A::Error> {
+                let value = seq
+                    .next_element::<u32>()?
+                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
+                Ok(Asn(value))
+            }
+        }
+
+        deserializer.deserialize_newtype_struct("Asn", AsnVisitor)
     }
 }
 
@@ -274,6 +319,23 @@ mod tests {
         for v in [0u32, 1, 65535, 65536, 100_000, 4_294_967_295] {
             let asn = Asn::new(v);
             assert_eq!(asn.value().to_string().parse::<Asn>().unwrap(), asn);
+        }
+    }
+
+    // --- Serde ---
+
+    // Pins the exact serde data-model shape to what #[derive] would produce
+    // for a newtype struct, so the hand-written impls can't silently diverge.
+    #[cfg(feature = "serde")]
+    #[test]
+    fn serde_tokens() {
+        use serde_test::{Token, assert_tokens};
+
+        for v in [0u32, 65536, 4_294_967_295] {
+            assert_tokens(
+                &Asn::new(v),
+                &[Token::NewtypeStruct { name: "Asn" }, Token::U32(v)],
+            );
         }
     }
 

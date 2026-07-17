@@ -9,7 +9,14 @@ keywords = ["asn", "bgp", "network", "asdot", "asdot-plus"]
 categories = ["embedded", "network-programming", "no-std", "no-std::no-alloc"]
 
 [dependencies]
-serde = { version = "1.0.228", optional = true, features = ["derive"]}
+serde = { version = "1.0.228", optional = true, default-features = false }
+
+[dev-dependencies]
+serde_test = "1"
 
 [package.metadata.docs.rs]
 all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ["cfg(docsrs)"] }
