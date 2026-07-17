@@ -48,6 +48,7 @@ use core::str::FromStr;
 /// # Ok::<(), asdot::ParseAsnError>(())
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Asn(u32);
 
 impl Asn {
@@ -76,7 +77,6 @@ impl Asn {
     const fn low(self) -> u32 {
         self.0 & 0xFFFF
     }
-
 }
 
 impl fmt::Display for Asn {
