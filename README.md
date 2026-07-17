@@ -12,7 +12,7 @@ Parses all three notation formats: ASPLAIN (`65536`), ASDOT (`1.0`), and ASDOT+ 
 
 ```toml
 [dependencies]
-asdot = "0.2"
+asdot = "0.3"
 ```
 
 ```rust
@@ -26,6 +26,13 @@ fn main() -> Result<(), ParseAsnError> {
     assert_eq!(asn.value().to_string(), "65536");   // ASPLAIN via the raw value
     Ok(())
 }
+```
+
+Enable the `serde` feature to derive `Serialize`/`Deserialize` on `Asn`:
+
+```toml
+[dependencies]
+asdot = { version = "0.3", features = ["serde"] }
 ```
 
 <br>

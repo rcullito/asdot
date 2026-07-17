@@ -1,6 +1,6 @@
 [package]
 name = "asdot"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 description = "RFC 5396-compliant Autonomous System Number (ASN) parsing and formatting"
 license = "MIT"
@@ -10,3 +10,6 @@ categories = ["embedded", "network-programming", "no-std", "no-std::no-alloc"]
 
 [dependencies]
 serde = { version = "1.0.228", optional = true, features = ["derive"]}
+
+[package.metadata.docs.rs]
+all-features = true
