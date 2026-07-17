@@ -1,4 +1,5 @@
 //! RFC 5396-compliant Autonomous System Number (ASN) parsing and formatting.
+//! ASNs identify the networks that exchange routes with BGP.
 //!
 //! Implements all three notation formats from RFC 5396:
 //! - **ASPLAIN**: plain decimal (`65536`)
@@ -50,14 +51,6 @@ use core::str::FromStr;
 pub struct Asn(u32);
 
 impl Asn {
-    // --- Well-known values (RFC 6793, RFC 6996, RFC 7607, RFC 5398) ---
-
-    /// AS_TRANS (23456): 2-byte stand-in for 4-byte ASNs in old BGP speakers (RFC 6793).
-    pub const TRANS: Self = Self(23456);
-
-    /// The highest valid ASN. 4294967295 is reserved per RFC 7607.
-    pub const MAX: Self = Self(4_294_967_294);
-
     // --- Constructors ---
 
     /// Creates an `Asn` from a raw `u32`.
