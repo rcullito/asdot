@@ -27,6 +27,10 @@
 //! ```
 
 #![cfg_attr(not(test), no_std)]
+// these features provide rustdoc users with visual markers
+// to know under which conidtions an item is available
+// originally introduced for the serde traits
+// https://doc.rust-lang.org/rustdoc/unstable-features.html#doccfg-and-docauto_cfg
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(docsrs, doc(auto_cfg))]
 
