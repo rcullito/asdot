@@ -1,9 +1,9 @@
 [package]
 name = "asdot"
-version = "0.4.0"
+version = "0.4.1"
 edition = "2024"
 description = "RFC 5396-compliant Autonomous System Number (ASN) parsing and formatting"
-license = "MIT"
+license = "MIT OR Apache-2.0"
 repository = "https://github.com/rcullito/asdot"
 keywords = ["asn", "bgp", "network", "asdot", "asdot-plus"]
 categories = ["embedded", "network-programming", "no-std", "no-std::no-alloc"]
