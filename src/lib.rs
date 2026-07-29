@@ -152,13 +152,6 @@ impl<'de> serde::Deserialize<'de> for Asn {
             ) -> Result<Asn, D::Error> {
                 <u32 as serde::Deserialize>::deserialize(deserializer).map(Asn)
             }
-
-            fn visit_seq<A: serde::de::SeqAccess<'de>>(self, mut seq: A) -> Result<Asn, A::Error> {
-                let value = seq
-                    .next_element::<u32>()?
-                    .ok_or_else(|| serde::de::Error::invalid_length(0, &self))?;
-                Ok(Asn(value))
-            }
         }
 
         deserializer.deserialize_newtype_struct("Asn", AsnVisitor)
